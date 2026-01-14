@@ -6,20 +6,20 @@ const FunnelVisual: React.FC = () => {
 
   useEffect(() => {
     const generateFunnelBg = async () => {
+      if (!process.env.API_KEY) return;
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
-          contents: [{ parts: [{ text: "Abstract architectural detail of a luxury modern glass skyscraper, architectural lines, teal and cyan glass reflections, soft morning light, minimalist, premium real estate aesthetic, high quality." }] }],
-          config: {
-            imageConfig: {
-              aspectRatio: "1:1"
-            }
-          }
+          contents: [{ parts: [{ text: "Macro architectural close-up of dichroic glass panels and polished steel beams of a luxury tower. Refractive light leaks, emerald and cyan spectrum, abstract minimalist geometry, sharp focus on textures, premium high-tech real estate aesthetic." }] }],
         });
-        const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-        if (part?.inlineData?.data) {
-          setFunnelImg(`data:image/png;base64,${part.inlineData.data}`);
+        
+        const candidates = response.candidates;
+        if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
+          const part = candidates[0].content.parts.find(p => p.inlineData?.data);
+          if (part?.inlineData?.data) {
+            setFunnelImg(`data:image/png;base64,${part.inlineData.data}`);
+          }
         }
       } catch (e) {
         console.error("Funnel BG Generation failed", e);

@@ -31,7 +31,7 @@ const AdCopySamples: React.FC = () => {
         hook: "🏠 Wake up to the view you deserve in Gurgaon...",
         body: "Stop settling for ordinary. Presenting 'The Emerald Towers' in the heart of Sector 65. \n\n✅ Private Balconies\n✅ Olympic-sized Pool\n✅ 3-Tier Security\n\nOnly 5 units remaining at launch price!",
         cta: "Learn More",
-        prompt: "Photorealistic 8k architectural shot of a ultra-luxury modern glass residential skyscraper in Gurgaon Sector 65, golden hour lighting, lush green landscaping at base, professional photography."
+        prompt: "Photorealistic architectural exterior of a luxury residential skyscraper in Gurgaon. Glass facade reflecting a pink and orange sky, infinity pool on the balcony, lush landscaping, shot from a low-angle drone, high-end commercial property photography style, 8k."
       },
       {
         id: "m2",
@@ -40,31 +40,27 @@ const AdCopySamples: React.FC = () => {
         hook: "🎥 Take a 60-second tour of your future home!",
         body: "Experience luxury like never before. Watch the full walkthrough of our premium 4BHK Penthouse in Noida. \n\n📍 Location: Sector 150\n✨ Fully Furnished Options\n💎 Limited Edition Units\n\nClick below to get the full price list on WhatsApp.",
         cta: "Watch More",
-        prompt: "Interior view of a high-end luxury penthouse living room in Noida Sector 150, floor to ceiling windows showing city skyline, italian marble floors, modern designer furniture, cinematic lighting, 8k."
+        prompt: "Interior design shot of a high-end luxury penthouse living room in Noida. Floor-to-ceiling windows with panoramic city views, Italian marble floors, bespoke furniture, warm morning sunlight, cinematic lighting, 8k, ultra-realistic."
       }
     ]
   };
 
   const generateImage = async (id: string, prompt: string) => {
-    if (images[id] || loadingImages[id]) return;
+    if (images[id] || loadingImages[id] || !process.env.API_KEY) return;
 
     setLoadingImages(prev => ({ ...prev, [id]: true }));
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
+        model: 'gemini-2.5-flash-image',
         contents: [{ parts: [{ text: prompt }] }],
-        config: {
-          imageConfig: {
-            aspectRatio: "16:9"
-          }
-        }
       });
 
       let imageData = null;
-      if (response.candidates?.[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData) {
+      const candidates = response.candidates;
+      if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
+        for (const part of candidates[0].content.parts) {
+          if (part.inlineData?.data) {
             imageData = `data:image/png;base64,${part.inlineData.data}`;
             break;
           }

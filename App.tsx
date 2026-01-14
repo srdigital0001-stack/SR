@@ -46,22 +46,19 @@ const App: React.FC = () => {
     const interval = setInterval(initObserver, 1000);
 
     const generateBg = async () => {
+      if (!process.env.API_KEY) return;
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-3-pro-image-preview',
-          contents: [{ parts: [{ text: "Cinematic shot of a luxury modern residential skyscraper skyline in Gurgaon at golden hour, glowing glass facades, premium architectural photography, emerald and gold lighting highlights, soft bokeh, extremely high quality, 8k." }] }],
-          config: {
-            imageConfig: {
-              aspectRatio: "16:9"
-            }
-          }
+          model: 'gemini-2.5-flash-image',
+          contents: [{ parts: [{ text: "Aerial wide-angle cinematic shot of a futuristic luxury residential skyline in Gurgaon. High-end architectural photography, glass skyscrapers reflecting a deep golden hour sunset, volumetric lighting, emerald and amber color palette, sharp focus, 8k resolution, shot on Hasselblad." }] }],
         });
         
         let imageUrl = null;
-        if (response.candidates?.[0]?.content?.parts) {
-          for (const part of response.candidates[0].content.parts) {
-            if (part.inlineData) {
+        const candidates = response.candidates;
+        if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
+          for (const part of candidates[0].content.parts) {
+            if (part.inlineData?.data) {
               imageUrl = `data:image/png;base64,${part.inlineData.data}`;
               break;
             }
@@ -90,7 +87,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-900/10 blur-[140px] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
         {bgImage && (
           <div 
-            className="absolute inset-0 opacity-[0.12] mix-blend-overlay transition-opacity duration-1000"
+            className="absolute inset-0 opacity-[0.18] mix-blend-overlay transition-opacity duration-1000"
             style={{ 
               backgroundImage: `url(${bgImage})`,
               backgroundSize: 'cover',

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import FunnelVisual from './FunnelVisual';
 
@@ -7,7 +6,11 @@ const Hero: React.FC = () => {
 
   return (
     <section className="relative px-4 py-16 md:py-28 md:px-8 overflow-hidden">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      {/* Dynamic Animated Background Elements */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-500/5 blur-[120px] rounded-full animate-pulse-slow"></div>
+      <div className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center relative z-10">
         <div className="reveal">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-8">
             <span className="relative flex h-2 w-2">
@@ -77,7 +80,7 @@ const Hero: React.FC = () => {
           </div>
         </div>
 
-        <div className="reveal relative">
+        <div className="reveal relative animate-float">
           <div className="absolute -inset-10 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
           <FunnelVisual />
         </div>
