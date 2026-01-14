@@ -1,5 +1,8 @@
 {
-  "name": "SR LEAD 2",
-  "description": "High-converting landing page for SR Digital targeting realtors in Delhi NCR for Google and Meta Ads services.",
-  "requestFramePermissions": []
+  "name": "SR Digital - Premium Real Estate Growth",
+  "description": "High-converting performance marketing landing page for real estate lead generation in Delhi NCR.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }
