@@ -6,7 +6,7 @@ import TrustStrip from './components/TrustStrip';
 import MobileCTA from './components/MobileCTA';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 
-// Lazy load secondary components
+// Lazy load non-critical components
 const Features = lazy(() => import('./components/Features'));
 const AdCopySamples = lazy(() => import('./components/AdCopySamples'));
 const HowItWorks = lazy(() => import('./components/HowItWorks'));
@@ -15,12 +15,12 @@ const FAQ = lazy(() => import('./components/FAQ'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const Footer = lazy(() => import('./components/Footer'));
 
-const ComponentSkeleton: React.FC<{ height?: string }> = ({ height = "400px" }) => (
-  <div className="max-w-7xl mx-auto px-4 py-20 w-full animate-pulse">
-    <div className="h-10 bg-white/5 rounded-full w-1/3 mx-auto mb-12"></div>
+const Skeleton: React.FC<{ height?: string }> = ({ height = "400px" }) => (
+  <div className="max-w-7xl mx-auto px-4 py-24 w-full">
+    <div className="h-12 w-1/3 bg-white/5 rounded-full mx-auto mb-16 skeleton-item"></div>
     <div className="grid md:grid-cols-3 gap-8">
-      {[1, 2, 3].map((i) => (
-        <div key={i} style={{ height }} className="bg-white/5 rounded-[32px] border border-white/5"></div>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ height }} className="bg-white/5 rounded-[40px] border border-white/5 skeleton-item"></div>
       ))}
     </div>
   </div>
@@ -38,13 +38,13 @@ const App: React.FC = () => {
       });
     }, { threshold: 0.1 });
 
-    // Function to re-check for reveal elements (especially after lazy load)
-    const observeElements = () => {
+    const initObserver = () => {
       document.querySelectorAll('.reveal:not(.active)').forEach(el => observer.observe(el));
     };
 
-    observeElements();
-    const timer = setInterval(observeElements, 1000); 
+    // Run initially and then on a interval to catch lazy loaded content
+    initObserver();
+    const interval = setInterval(initObserver, 1000);
 
     const generateBg = async () => {
       try {
@@ -59,16 +59,9 @@ const App: React.FC = () => {
           }
         });
         
-        let imageUrl = null;
-        for (const part of response.candidates?.[0]?.content?.parts || []) {
-          if (part.inlineData) {
-            imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-            break;
-          }
-        }
-        
+        const imageUrl = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
         if (imageUrl) {
-          setBgImage(imageUrl);
+          setBgImage(`data:image/png;base64,${imageUrl}`);
         }
       } catch (e) {
         console.error("BG Generation failed", e);
@@ -78,17 +71,15 @@ const App: React.FC = () => {
     
     return () => {
       observer.disconnect();
-      clearInterval(timer);
+      clearInterval(interval);
     };
   }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 selection:bg-emerald-500 selection:text-white relative">
-      {/* Background Layer */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-900/20 blur-[140px] rounded-full animate-pulse"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-900/10 blur-[140px] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-        
         {bgImage && (
           <div 
             className="absolute inset-0 opacity-[0.12] mix-blend-overlay transition-opacity duration-1000"
@@ -96,11 +87,9 @@ const App: React.FC = () => {
               backgroundImage: `url(${bgImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              filter: 'contrast(1.1) brightness(0.9)'
             }}
           ></div>
         )}
-        
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
@@ -110,28 +99,28 @@ const App: React.FC = () => {
           <Hero />
           <TrustStrip />
           
-          <Suspense fallback={<ComponentSkeleton height="350px" />}>
+          <Suspense fallback={<Skeleton height="350px" />}>
             <Features />
           </Suspense>
 
-          <Suspense fallback={<ComponentSkeleton height="500px" />}>
+          <Suspense fallback={<Skeleton height="500px" />}>
             <AdCopySamples />
           </Suspense>
 
-          <Suspense fallback={<ComponentSkeleton height="300px" />}>
+          <Suspense fallback={<Skeleton height="300px" />}>
             <HowItWorks />
           </Suspense>
 
           <Suspense fallback={
-            <div className="py-24 flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin mb-4"></div>
-              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold animate-pulse">Initializing Growth Engine...</p>
+            <div className="py-24 flex flex-col items-center justify-center">
+              <div className="w-16 h-16 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest animate-pulse">Loading Conversion Engine...</p>
             </div>
           }>
             <LeadForm />
           </Suspense>
 
-          <Suspense fallback={<ComponentSkeleton height="200px" />}>
+          <Suspense fallback={<Skeleton height="200px" />}>
             <FAQ />
             <Testimonials />
             <Footer />
