@@ -38,19 +38,19 @@ const App: React.FC = () => {
       });
     }, { threshold: 0.1 });
 
-    // Re-run observer check whenever DOM updates or scripts load
+    // Function to re-check for reveal elements (especially after lazy load)
     const observeElements = () => {
-      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+      document.querySelectorAll('.reveal:not(.active)').forEach(el => observer.observe(el));
     };
 
     observeElements();
-    const timer = setInterval(observeElements, 1000); // Catch lazy loaded elements
+    const timer = setInterval(observeElements, 1000); 
 
     const generateBg = async () => {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
+          model: 'gemini-3-flash-preview',
           contents: [{ parts: [{ text: "Cinematic shot of a luxury modern residential skyscraper skyline in Gurgaon at golden hour, glowing glass facades, premium architectural photography, emerald and gold lighting highlights, soft bokeh, extremely high quality, 8k." }] }],
           config: {
             imageConfig: {
@@ -58,9 +58,17 @@ const App: React.FC = () => {
             }
           }
         });
-        const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-        if (part?.inlineData?.data) {
-          setBgImage(`data:image/png;base64,${part.inlineData.data}`);
+        
+        let imageUrl = null;
+        for (const part of response.candidates?.[0]?.content?.parts || []) {
+          if (part.inlineData) {
+            imageUrl = `data:image/png;base64,${part.inlineData.data}`;
+            break;
+          }
+        }
+        
+        if (imageUrl) {
+          setBgImage(imageUrl);
         }
       } catch (e) {
         console.error("BG Generation failed", e);
@@ -114,11 +122,16 @@ const App: React.FC = () => {
             <HowItWorks />
           </Suspense>
 
-          <Suspense fallback={<div className="py-20 flex flex-col items-center"><div className="w-12 h-12 rounded-full border-2 border-emerald-500 animate-ping mb-4"></div><p className="text-slate-500 text-xs uppercase tracking-widest font-bold">Initializing Lead Engine...</p></div>}>
+          <Suspense fallback={
+            <div className="py-24 flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin mb-4"></div>
+              <p className="text-slate-500 text-xs uppercase tracking-widest font-bold animate-pulse">Initializing Growth Engine...</p>
+            </div>
+          }>
             <LeadForm />
           </Suspense>
 
-          <Suspense fallback={<ComponentSkeleton height="150px" />}>
+          <Suspense fallback={<ComponentSkeleton height="200px" />}>
             <FAQ />
             <Testimonials />
             <Footer />
