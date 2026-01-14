@@ -5,6 +5,7 @@ const AdCopySamples: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'google' | 'meta'>('google');
   const [images, setImages] = useState<{ [key: string]: string }>({});
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
+  const [error, setError] = useState<string | null>(null);
 
   const samples = {
     google: [
@@ -31,7 +32,7 @@ const AdCopySamples: React.FC = () => {
         hook: "🏠 Wake up to the view you deserve in Gurgaon...",
         body: "Stop settling for ordinary. Presenting 'The Emerald Towers' in the heart of Sector 65. \n\n✅ Private Balconies\n✅ Olympic-sized Pool\n✅ 3-Tier Security\n\nOnly 5 units remaining at launch price!",
         cta: "Learn More",
-        prompt: "Photorealistic architectural exterior of a luxury residential skyscraper in Gurgaon. Glass facade reflecting a pink and orange sky, infinity pool on the balcony, lush landscaping, shot from a low-angle drone, high-end commercial property photography style, 8k."
+        prompt: "Professional architectural exterior shot of a luxury residential skyscraper in Gurgaon from a low-angle drone perspective. Reflective glass facade catching a vibrant pink and orange sunset sky, lush rooftop landscaping, high-end property marketing photography, ultra-realistic, 8k, sharp focus."
       },
       {
         id: "m2",
@@ -40,24 +41,25 @@ const AdCopySamples: React.FC = () => {
         hook: "🎥 Take a 60-second tour of your future home!",
         body: "Experience luxury like never before. Watch the full walkthrough of our premium 4BHK Penthouse in Noida. \n\n📍 Location: Sector 150\n✨ Fully Furnished Options\n💎 Limited Edition Units\n\nClick below to get the full price list on WhatsApp.",
         cta: "Watch More",
-        prompt: "Interior design shot of a high-end luxury penthouse living room in Noida. Floor-to-ceiling windows with panoramic city views, Italian marble floors, bespoke furniture, warm morning sunlight, cinematic lighting, 8k, ultra-realistic."
+        prompt: "High-end interior design shot of a luxury penthouse living room in Noida. Floor-to-ceiling windows with panoramic city views, Italian white marble floors, bespoke walnut furniture, Eames-style lounger, ambient warm afternoon lighting, cinematic interior photography style, 8k, photorealistic."
       }
     ]
   };
 
   const generateImage = async (id: string, prompt: string) => {
-    if (images[id] || loadingImages[id] || !process.env.API_KEY) return;
+    const apiKey = process.env.API_KEY;
+    if (images[id] || loadingImages[id] || !apiKey || apiKey === "") return;
 
     setLoadingImages(prev => ({ ...prev, [id]: true }));
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: [{ parts: [{ text: prompt }] }],
       });
 
       let imageData = null;
-      const candidates = response.candidates;
+      const candidates = response?.candidates;
       if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
         for (const part of candidates[0].content.parts) {
           if (part.inlineData?.data) {
@@ -70,8 +72,9 @@ const AdCopySamples: React.FC = () => {
       if (imageData) {
         setImages(prev => ({ ...prev, [id]: imageData }));
       }
-    } catch (error) {
-      console.error("Error generating image:", error);
+    } catch (err) {
+      console.error("Error generating image:", err);
+      setError("Failed to generate visuals. Please check API configuration.");
     } finally {
       setLoadingImages(prev => ({ ...prev, [id]: false }));
     }
@@ -92,9 +95,27 @@ const AdCopySamples: React.FC = () => {
     return (
       <div className="relative aspect-video bg-slate-800 rounded-xl mb-4 flex items-center justify-center overflow-hidden border border-white/5 shadow-inner">
         {isLoading ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest animate-pulse">Generating Real Visual...</span>
+          <div className="absolute inset-0 flex flex-col p-6">
+             <div className="w-full h-full rounded-lg bg-white/5 shimmer-effect relative overflow-hidden flex flex-col items-center justify-center gap-4">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent animate-scan"></div>
+                
+                {/* Visual Placeholder Icons */}
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-2 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
+                  <svg className="w-8 h-8 text-emerald-500/40 absolute inset-0 m-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] animate-pulse">SR Creative Engine</span>
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30 animate-bounce" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/30 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                </div>
+             </div>
           </div>
         ) : imageUrl ? (
           <>
@@ -102,12 +123,15 @@ const AdCopySamples: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent flex items-center justify-center">
-            <svg className="w-12 h-12 text-white/5" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent flex flex-col items-center justify-center p-6 text-center">
+            <svg className="w-12 h-12 text-white/5 mb-2" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+              {!process.env.API_KEY ? "Configuration Required" : "Click tab to load visuals"}
+            </p>
           </div>
         )}
 
-        {type === 'video' && !isLoading && (
+        {type === 'video' && !isLoading && imageUrl && (
           <div className="absolute inset-0 flex items-center justify-center">
              <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 pulse-whatsapp cursor-pointer hover:bg-white/20 transition-all z-20">
                 <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -115,19 +139,17 @@ const AdCopySamples: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && (
+        {!isLoading && imageUrl && (
             <>
                 <span className={`absolute top-4 ${type === 'video' ? 'right-4 bg-red-600' : 'left-4 bg-emerald-600'} text-[8px] font-bold text-white px-2 py-0.5 rounded uppercase z-10`}>
                     {type === 'video' ? 'Live Tour' : 'New Launch'}
                 </span>
-                {imageUrl && !isLoading && (
-                    <div className="absolute bottom-4 left-4 z-10">
-                        <div className="glass px-3 py-1.5 rounded-lg border border-white/10">
-                            <p className="text-[8px] font-bold uppercase tracking-widest text-emerald-400 leading-none mb-0.5">Verified Asset</p>
-                            <p className="text-sm font-black text-white leading-none">Gurgaon Portfolio</p>
-                        </div>
+                <div className="absolute bottom-4 left-4 z-10">
+                    <div className="glass px-3 py-1.5 rounded-lg border border-white/10">
+                        <p className="text-[8px] font-bold uppercase tracking-widest text-emerald-400 leading-none mb-0.5">Verified Asset</p>
+                        <p className="text-sm font-black text-white leading-none">Gurgaon Portfolio</p>
                     </div>
-                )}
+                </div>
             </>
         )}
       </div>
@@ -140,6 +162,7 @@ const AdCopySamples: React.FC = () => {
         <div className="text-center mb-16 reveal">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">High-Converting <span className="text-emerald-500">Ad Samples</span></h2>
           <p className="text-slate-400 max-w-2xl mx-auto">We don't just run ads; we write copy that sells. Below are real-world samples featuring AI-generated hyper-realistic visuals for maximum CTR.</p>
+          {error && <p className="mt-4 text-red-400 text-xs font-bold uppercase tracking-widest">{error}</p>}
         </div>
 
         <div className="flex justify-center mb-12">

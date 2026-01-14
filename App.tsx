@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import Header from './components/Header';
@@ -46,16 +47,30 @@ const App: React.FC = () => {
     const interval = setInterval(initObserver, 1000);
 
     const generateBg = async () => {
-      if (!process.env.API_KEY) return;
+      const apiKey = process.env.API_KEY;
+      if (!apiKey) {
+        console.warn("API_KEY not found in environment. Visual generation disabled.");
+        return;
+      }
+
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
+        // Using high-quality model for the main hero background
         const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
-          contents: [{ parts: [{ text: "Aerial wide-angle cinematic shot of a futuristic luxury residential skyline in Gurgaon. High-end architectural photography, glass skyscrapers reflecting a deep golden hour sunset, volumetric lighting, emerald and amber color palette, sharp focus, 8k resolution, shot on Hasselblad." }] }],
+          model: 'gemini-3-pro-image-preview',
+          contents: {
+            parts: [{ text: "Panoramic aerial wide-angle cinematic shot of a futuristic luxury residential skyscraper skyline in Gurgaon during golden hour. Hyper-realistic architectural photography, emerald green glass facades reflecting a deep amber sunset, volumetric lighting, mist in the distance, 8k resolution, shot on Hasselblad, sharp focus." }]
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: "16:9",
+              imageSize: "1K"
+            }
+          }
         });
         
         let imageUrl = null;
-        const candidates = response.candidates;
+        const candidates = response?.candidates;
         if (candidates && candidates.length > 0 && candidates[0].content?.parts) {
           for (const part of candidates[0].content.parts) {
             if (part.inlineData?.data) {
@@ -69,9 +84,10 @@ const App: React.FC = () => {
           setBgImage(imageUrl);
         }
       } catch (e) {
-        console.error("BG Generation failed", e);
+        console.error("Hero Background Generation failed:", e);
       }
     };
+    
     generateBg();
     
     return () => {

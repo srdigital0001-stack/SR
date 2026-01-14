@@ -3,15 +3,31 @@ import { GoogleGenAI } from "@google/genai";
 
 const FunnelVisual: React.FC = () => {
   const [funnelImg, setFunnelImg] = useState<string | null>(null);
+  const [loadingStage, setLoadingStage] = useState(0);
+
+  const stages = [
+    "Analyzing Architecture",
+    "Rendering Textures",
+    "Optimizing Lighting",
+    "Finalizing Conversion Engine"
+  ];
 
   useEffect(() => {
+    let stageInterval: number;
+    if (!funnelImg) {
+      stageInterval = window.setInterval(() => {
+        setLoadingStage((prev) => (prev + 1) % stages.length);
+      }, 1500);
+    }
+
     const generateFunnelBg = async () => {
-      if (!process.env.API_KEY) return;
+      const apiKey = process.env.API_KEY;
+      if (!apiKey) return;
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
-          contents: [{ parts: [{ text: "Macro architectural close-up of dichroic glass panels and polished steel beams of a luxury tower. Refractive light leaks, emerald and cyan spectrum, abstract minimalist geometry, sharp focus on textures, premium high-tech real estate aesthetic." }] }],
+          contents: [{ parts: [{ text: "Macro architectural close-up of dichroic glass panels meeting polished black steel beams. Refractive light leaks, iridescent emerald and cyan reflections, abstract minimalist geometric composition, sharp focus on surface textures, high-end commercial property aesthetic, 8k." }] }],
         });
         
         const candidates = response.candidates;
@@ -26,7 +42,9 @@ const FunnelVisual: React.FC = () => {
       }
     };
     generateFunnelBg();
-  }, []);
+
+    return () => clearInterval(stageInterval);
+  }, [funnelImg]);
 
   return (
     <div className="relative glass rounded-[40px] p-6 md:p-10 border border-white/10 shadow-[0_0_50px_-12px_rgba(16,185,129,0.3)] overflow-hidden group">
@@ -90,6 +108,11 @@ const FunnelVisual: React.FC = () => {
               <path d="M40 20 H360 L335 95 H65 Z" fill="url(#realEstatePattern)" />
               <path d="M40 20 H360 L335 95 H65 Z" fill="url(#funnelOverlay)" />
               <path d="M40 20 H360 L335 95 H65 Z" stroke="#10b981" strokeWidth="1" strokeOpacity="0.3" fill="none" />
+              {!funnelImg && (
+                <g className="animate-scan absolute">
+                  <line x1="40" y1="0" x2="360" y2="0" stroke="#10b981" strokeWidth="2" opacity="0.5" className="animate-scan" />
+                </g>
+              )}
               <g transform="translate(160, 30)">
                  <path d="M12 12H21.5C21.8 12.8 22 13.8 22 15C22 20.5 18 23 14 23C9.5 23 6 19.5 6 15C6 10.5 9.5 7 14 7C16.5 7 18.5 8 20 9.5L17.5 12C16.5 11.5 15.5 11 14 11C11.5 11 9.5 13 9.5 15.5C9.5 18 11.5 20 14 20C16 20 17.5 19 18.5 17.5H14V14.5H21.5" fill="white" />
                  <path d="M38 12C38 14.2 36.2 16 34 16C31.8 16 30 14.2 30 12C30 9.8 31.8 8 34 8C35.5 8 36.5 9.5 38 12C39.5 14.5 40.5 16 42 16C44.2 16 46 14.2 46 12C46 9.8 44.2 8 42 8C39.8 8 38 9.8 38 12Z" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -175,6 +198,14 @@ const FunnelVisual: React.FC = () => {
             </g>
           </svg>
         </div>
+
+        {!funnelImg && (
+          <div className="mt-4 text-center">
+            <span className="text-[10px] text-emerald-500/80 font-bold uppercase tracking-widest animate-pulse">
+              {stages[loadingStage]}...
+            </span>
+          </div>
+        )}
 
         <div className="mt-10 grid grid-cols-2 gap-5">
           <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-500/30 transition-colors">
