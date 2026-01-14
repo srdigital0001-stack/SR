@@ -42,7 +42,6 @@ const App: React.FC = () => {
       document.querySelectorAll('.reveal:not(.active)').forEach(el => observer.observe(el));
     };
 
-    // Run initially and then on a interval to catch lazy loaded content
     initObserver();
     const interval = setInterval(initObserver, 1000);
 
@@ -50,7 +49,7 @@ const App: React.FC = () => {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-3-pro-image-preview',
           contents: [{ parts: [{ text: "Cinematic shot of a luxury modern residential skyscraper skyline in Gurgaon at golden hour, glowing glass facades, premium architectural photography, emerald and gold lighting highlights, soft bokeh, extremely high quality, 8k." }] }],
           config: {
             imageConfig: {
@@ -59,9 +58,18 @@ const App: React.FC = () => {
           }
         });
         
-        const imageUrl = response.candidates?.[0]?.content?.parts.find(p => p.inlineData)?.inlineData?.data;
+        let imageUrl = null;
+        if (response.candidates?.[0]?.content?.parts) {
+          for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+              imageUrl = `data:image/png;base64,${part.inlineData.data}`;
+              break;
+            }
+          }
+        }
+        
         if (imageUrl) {
-          setBgImage(`data:image/png;base64,${imageUrl}`);
+          setBgImage(imageUrl);
         }
       } catch (e) {
         console.error("BG Generation failed", e);

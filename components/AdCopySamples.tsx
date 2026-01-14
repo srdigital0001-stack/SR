@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -53,19 +52,27 @@ const AdCopySamples: React.FC = () => {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+        model: 'gemini-3-pro-image-preview',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
-            imageConfig: {
-                aspectRatio: "16:9"
-            }
+          imageConfig: {
+            aspectRatio: "16:9"
+          }
         }
       });
 
-      const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-      if (part?.inlineData?.data) {
-        const url = `data:image/png;base64,${part.inlineData.data}`;
-        setImages(prev => ({ ...prev, [id]: url }));
+      let imageData = null;
+      if (response.candidates?.[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if (part.inlineData) {
+            imageData = `data:image/png;base64,${part.inlineData.data}`;
+            break;
+          }
+        }
+      }
+
+      if (imageData) {
+        setImages(prev => ({ ...prev, [id]: imageData }));
       }
     } catch (error) {
       console.error("Error generating image:", error);
@@ -112,7 +119,6 @@ const AdCopySamples: React.FC = () => {
           </div>
         )}
 
-        {/* Labels */}
         {!isLoading && (
             <>
                 <span className={`absolute top-4 ${type === 'video' ? 'right-4 bg-red-600' : 'left-4 bg-emerald-600'} text-[8px] font-bold text-white px-2 py-0.5 rounded uppercase z-10`}>
@@ -140,7 +146,6 @@ const AdCopySamples: React.FC = () => {
           <p className="text-slate-400 max-w-2xl mx-auto">We don't just run ads; we write copy that sells. Below are real-world samples featuring AI-generated hyper-realistic visuals for maximum CTR.</p>
         </div>
 
-        {/* Tab Switcher */}
         <div className="flex justify-center mb-12">
           <div className="inline-flex p-1 bg-white/5 rounded-2xl border border-white/10">
             <button 
